@@ -20,6 +20,9 @@ import {
   Lock
 } from 'lucide-react';
 import Toast from './Toast';
+import AdminPanel from './AdminPanel';
+
+const ADMIN_EMAIL = "kekdanik715@gmail.com";
 
 const UserProfile: React.FC = () => {
   const { user, signOut } = useAuth();
@@ -553,6 +556,9 @@ const UserProfile: React.FC = () => {
 
       {/* Toast уведомления */}
       {toast && <Toast message={toast.msg} type={toast.type} />}
+
+      {/* Показываем админ-панель только для администратора */}
+      {user?.email === ADMIN_EMAIL && <AdminPanel />}
     </div>
   );
 };

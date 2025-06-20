@@ -8,6 +8,7 @@ export const useProfile = () => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const { user } = useAuth();
+  const [pokemons, setPokemons] = useState<any[]>([]);
 
   useEffect(() => {
     if (user) {
@@ -65,7 +66,8 @@ export const useProfile = () => {
         'location',
         'phone',
         'avatar_url',
-        'banner_url'
+        'banner_url',
+        'bio',
       ];
 
       const filteredUpdates = Object.fromEntries(
@@ -169,6 +171,41 @@ export const useProfile = () => {
     }
   };
 
+  const fetchPokemons = async () => {
+    if (!user) return;
+
+    try {
+      // Пользовательские покемоны
+      const { data: userPokemons, error: userError } = await supabase
+        .from('user_pokemon')
+        .select('id, pokemon_name, pokemon_image')
+        .eq('user_id', user.id);
+
+      if (userError) throw userError;
+
+      // Админ-покемоны
+      const isAdmin = user.email === 'kekdanik715@gmail.com';
+
+      const { data: adminPokemons, error: adminError } = await supabase
+        .from('admin_pokemon')
+        .select('id, pokemon_name, pokemon_image, hidden');
+
+      if (adminError) throw adminError;
+
+      const visibleAdminPokemons = isAdmin
+        ? adminPokemons
+        : (adminPokemons || []).filter(p => p.hidden === false);
+
+      setPokemons([...(userPokemons || []), ...(visibleAdminPokemons || [])]);
+    } catch (err) {
+      console.error('Error loading pokemons:', err);
+    }
+  };
+
+  useEffect(() => {
+    fetchPokemons();
+  }, [user]);
+
   return {
     profile,
     loading,
@@ -177,6 +214,7 @@ export const useProfile = () => {
     uploadAvatar,
     uploadBanner,
     refetch: fetchProfile,
-    changePassword
+    changePassword,
+    pokemons,
   };
 };
